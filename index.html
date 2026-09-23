@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Um Convite Pra Você</title>
+<style>
+  :root{ color-scheme: light; --ground:#FBE3E8; --ink:#3A1027; --accent:#E0245E; }
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stage{
+    height:100%;
+    display:grid;
+    place-items:center;
+    padding-inline:16px;
+    box-sizing:border-box;
+    text-align:center;
+  }
+  h1{font-size:32px;font-weight:700;margin:0 0 28px}
+  .buttons{display:flex;gap:12px;justify-content:center}
+  button{
+    font:inherit;
+    font-size:18px;
+    font-weight:600;
+    border-radius:999px;
+    padding:12px 30px;
+    touch-action:manipulation;
+  }
+  #yes{background:var(--accent);color:#fff;border:0}
+  #no{background:transparent;color:var(--ink);border:2px solid var(--ink);white-space:nowrap}
+  #no.flying{position:fixed;transition:left .2s ease, top .2s ease}
+  #no.converted{background:var(--accent);color:#fff;border-color:var(--accent)}
+  @media (prefers-reduced-motion: reduce){ #no.flying{transition:none} }
+</style>
+</head>
+<body>
+
+<main class="stage">
+  <div id="ask">
+    <h1>Quer sair comigo?</h1>
+    <div class="buttons">
+      <button id="yes" type="button">Sim</button>
+      <button id="no" type="button">Não</button>
+    </div>
+  </div>
+  <h1 id="done" hidden>Eba! Me diz qual dia fica bom pra você.</h1>
+</main>
+
+<script>
+(function(){
+  const no = document.getElementById('no');
+  const yes = document.getElementById('yes');
+  let tries = 0, converted = false, last = 0;
+
+  function moveNo(){
+    const r = no.getBoundingClientRect();
+    if(!no.classList.contains('flying')){
+      no.style.left = r.left + 'px';
+      no.style.top = r.top + 'px';
+      no.classList.add('flying');
+      no.getBoundingClientRect();
+    }
+    const pad = 16, w = no.offsetWidth, h = no.offsetHeight;
+    const maxX = Math.max(pad, innerWidth - w - pad);
+    const maxY = Math.max(pad, innerHeight - h - pad);
+    const b = yes.getBoundingClientRect();
+    let x, y, g = 0;
+    do{
+      x = pad + Math.random() * (maxX - pad);
+      y = pad + Math.random() * (maxY - pad);
+    } while(++g < 30 && (
+      (Math.abs(x - r.left) < 90 && Math.abs(y - r.top) < 90) ||
+      (x < b.right + 10 && x + w > b.left - 10 && y < b.bottom + 10 && y + h > b.top - 10)
+    ));
+    no.style.left = x + 'px';
+    no.style.top = y + 'px';
+  }
+
+  function dodge(e){
+    if(converted) return;
+    const now = Date.now();
+    if(now - last < 250) return;
+    last = now;
+    if(e) e.preventDefault();
+    if(++tries >= 5){
+      converted = true;
+      no.textContent = 'Sim';
+      no.classList.add('converted');
+    }
+    moveNo();
+  }
+
+  if(window.PointerEvent){
+    no.addEventListener('pointerdown', dodge);
+  } else {
+    no.addEventListener('touchstart', dodge, {passive:false});
+    no.addEventListener('mousedown', dodge);
+  }
+  no.addEventListener('mouseenter', () => { if(matchMedia('(hover:hover)').matches) dodge(); });
+  no.addEventListener('click', e => { converted ? accept() : e.preventDefault(); });
+  yes.addEventListener('click', accept);
+
+  function accept(){
+    no.hidden = true;
+    document.getElementById('ask').hidden = true;
+    document.getElementById('done').hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
